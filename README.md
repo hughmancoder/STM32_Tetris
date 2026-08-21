@@ -23,5 +23,11 @@ If you don't see the buttons in VS Code, you can use the PlatformIO CLI directly
 - **Build Only:** `pio run`
 - **Build & Upload:** `pio run -t upload`
 - **Clean Project:** `pio run -t clean`
+- **Monitor Serial:** `pio device monitor`
 
-*(Note: If `pio` says command not found, try using the full path: `~/.platformio/penv/bin/pio run -t upload`)*
+#### Making `pio` available globally in your terminal:
+If `pio` gives `command not found`, add it to your `~/.zshrc` by running:
+```bash
+echo 'export PATH="$HOME/.platformio/penv/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
