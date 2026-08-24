@@ -1,89 +1,60 @@
-#include "stm32f4xx.h"
-#include "sos.h"
+#include "display.h"
+#include "stm32f4xx_hal.h"
+#include "system.h"
 #include <stdio.h>
-
-// Global tick counter incremented by SysTick interrupt every 1ms
-static volatile uint32_t g_ms_ticks = 0;
-
-/**
- * @brief SysTick Interrupt Handler (Fires every 1ms)
- */
-void SysTick_Handler(void) {
-    g_ms_ticks++;
-}
-
-/**
- * @brief Precise millisecond delay relying on SysTick register counter
- */
-void delay_ms(uint32_t ms) {
-    uint32_t start = g_ms_ticks;
-    while ((g_ms_ticks - start) < ms) {
-        __NOP();
-    }
-}
-
-/**
- * @brief Initialize ARM Cortex-M SysTick timer for 1ms interrupts
- */
-static void systick_init(void) {
-    // STM32F4 default clock on reset is HSI (16 MHz)
-    SysTick->LOAD = (16000000UL / 1000UL) - 1UL;
-    SysTick->VAL  = 0UL;
-    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk |
-                    SysTick_CTRL_TICKINT_Msk   |
-                    SysTick_CTRL_ENABLE_Msk;
-}
-
-/**
- * @brief Bare-metal USART2 initialization (115200 Baud, 8N1) on PA2 (TX) and PA3 (RX)
- */
-static void usart2_init(void) {
-    // 1. Enable GPIOA and USART2 peripheral clocks
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
-
-    // 2. Set PA2 (TX) and PA3 (RX) to Alternate Function mode (10 in MODER)
-    GPIOA->MODER &= ~((3U << (2 * 2)) | (3U << (3 * 2)));
-    GPIOA->MODER |=  ((2U << (2 * 2)) | (2U << (3 * 2)));
-
-    // 3. Connect PA2 and PA3 to AF7 (USART2) in AFR[0] register
-    GPIOA->AFR[0] &= ~((0xFU << (2 * 4)) | (0xFU << (3 * 4)));
-    GPIOA->AFR[0] |=  ((7U << (2 * 4))   | (7U << (3 * 4)));
-
-    // 4. Set baud rate: 16 MHz / (16 * 115200) = 8.6805 -> Mantissa 8 (0x08), Fraction round(0.6805 * 16) = 11 (0x0B)
-    USART2->BRR = 0x008B;
-
-    // 5. Enable USART transmitter and peripheral
-    USART2->CR1 = USART_CR1_TE | USART_CR1_UE;
-}
-
-/**
- * @brief Retarget C standard library printf() to USART2 Data Register (DR)
- */
-int _write(int file, char *ptr, int len) {
-    for (int i = 0; i < len; i++) {
-        // Wait until Transmit Data Register Empty (TXE) flag is set in SR register
-        while (!(USART2->SR & USART_SR_TXE)) {
-            __NOP();
-        }
-        USART2->DR = (uint8_t)(ptr[i]);
-    }
-    return len;
-}
+#include "buttons.h"
+#include "tetris_engine.h"
 
 int main(void) {
-    // 1. Initialize hardware via bare-metal registers
-    systick_init();
-    usart2_init();
-    sos_gpio_init();
 
-    printf("\r\n=========================================\r\n");
-    printf("  STM32F446 Pure Bare-Metal SOS Started  \r\n");
-    printf("  Clock: 16 MHz HSI | Registers Only     \r\n");
-    printf("=========================================\r\n");
+  HAL_Init(); // Initialize the HAL Library (SysTick etc)
 
-    // 2. Main loop
-    while (1) {
-        play_sos();
+  usart2_init();
+  MAX7219_SPI_Init();
+
+  printf("\r\n=========================================\r\n");
+  printf("  MAX7219 HARDWARE TEST SUITE STARTED    \r\n");
+  printf("=========================================\r\n");
+
+  // Essential startup configuration
+  printf("[MAIN] Configuring MAX7219 essential registers...\r\n");
+  max7219_init_all(0x09, 0x00); // Decode mode: No decode for all
+  max7219_init_all(0x0A, 0x08); // Intensity: Medium brightness
+  max7219_init_all(0x0B, 0x07); // Scan limit: Display all 8 rows
+  max7219_init_all(0x0C, 0x01); // Shutdown: Wake up into normal operation
+  
+  // === DISPLAY TEST ===
+  // Force all LEDs on for all matrices to debug power and data connections
+  printf("[MAIN] Enabling Display Test Mode (All LEDs ON)...\r\n");
+  max7219_init_all(0x0F, 0x01);
+
+  // Clear all screens initially
+  printf("[MAIN] Clearing all displays initially...\r\n");
+  for (int row = 1; row <= 8; row++) {
+    max7219_write_row(row, 0x00, 0x00, 0x00, 0x00);
+  }
+
+  printf("[MAIN] Initializing Buttons...\r\n");
+  Buttons_Init();
+
+  printf("[MAIN] Initializing Tetris Engine...\r\n");
+  Tetris_Init();
+
+  printf("[MAIN] Entering Main Game Loop.\r\n");
+
+  uint32_t last_tick = HAL_GetTick();
+
+  // Main Game Loop
+  while (1) {
+    uint32_t current_tick = HAL_GetTick();
+    
+    // Run the game loop at roughly 60Hz (16ms)
+    if (current_tick - last_tick >= 16) {
+      last_tick = current_tick;
+      
+      Buttons_Update();
+      Tetris_Update();
+      Tetris_Render();
     }
+  }
 }

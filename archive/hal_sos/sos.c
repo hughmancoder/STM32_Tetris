@@ -31,7 +31,7 @@ void play_sos(void) {
   for (i = 0; i < 3; i++) {
     blink_led(200);
   }
-
+s
   // Long pause before repeating the whole SOS message
   HAL_Delay(2000);
 }
