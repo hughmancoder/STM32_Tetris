@@ -1,0 +1,26 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+.vscode/
+.clang_complete
+.gcc-flags.json
+
+# Build outputs
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+*.map
+tetris_sim
+
+# macOS
+.DS_Store
+
+# STM32CubeIDE / Eclipse (just in case)
+Debug/
+Release/
+.cproject
+.project
+.settings/
