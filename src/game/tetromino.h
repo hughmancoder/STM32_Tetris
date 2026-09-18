@@ -54,13 +54,13 @@ typedef enum {
 #define RGB565_GRAY 0x8410
 #define RGB565_DARKGRAY 0x2104
 
-#define COLOR_TETROMINO_I 0x0536 ///< Warm Teal / Turquoise (0, 168, 185)
-#define COLOR_TETROMINO_J 0xDFA2 ///< Soft Coral Pink (230, 120, 150)
-#define COLOR_TETROMINO_L 0xEC02 ///< Warm Tangerine Orange (245, 130, 20)
-#define COLOR_TETROMINO_O 0xE602 ///< Warm Goldenrod Yellow (235, 195, 20)
-#define COLOR_TETROMINO_S 0xD1A4 ///< Terra Cotta / Brick Red (215, 55, 40)
-#define COLOR_TETROMINO_T 0x9262 ///< Muted Wood Plum / Purple (145, 75, 145)
-#define COLOR_TETROMINO_Z 0x1468 ///< Forest / Emerald Green (20, 145, 70)
+#define COLOR_TETROMINO_I 0x0557 ///< Warm Teal / Turquoise (0, 168, 185)
+#define COLOR_TETROMINO_J 0xE3D2 ///< Soft Coral Pink (230, 120, 150)
+#define COLOR_TETROMINO_L 0xF402 ///< Warm Tangerine Orange (245, 130, 20)
+#define COLOR_TETROMINO_O 0xEE02 ///< Warm Goldenrod Yellow (235, 195, 20)
+#define COLOR_TETROMINO_S 0xD1A5 ///< Terra Cotta / Brick Red (215, 55, 40)
+#define COLOR_TETROMINO_T 0x9252 ///< Muted Wood Plum / Purple (145, 75, 145)
+#define COLOR_TETROMINO_Z 0x1488 ///< Forest / Emerald Green (20, 145, 70)
 
 /**
  * @brief Get whether a cell at (row, col) inside the 4x4 bounding box is

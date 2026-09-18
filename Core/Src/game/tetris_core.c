@@ -1,21 +1,8 @@
 /**
- * @file tetris_core.c
- * @brief Pure C Implementation of Tetris Game Rules, Movement, and Line Clears.
- *
- * PURPOSE & ARCHITECTURE:
- * -----------------------
  * Implements the core simulation logic for standard 10x20 Tetris:
  * - Deterministic state machine (`TETRIS_STATE_TITLE`, `PLAYING`, `GAME_OVER`).
- * - Wall and floor collision detection with obstacle verification.
- * - Tetromino lateral shift, 90-degree clockwise rotation, soft drop, and hard
- * drop.
- * - Lock-down into static board grid upon landing.
- * - Line clearing with row collapsing and standard Tetris scoring (Single,
- * Double, Triple, Tetris).
- * - 7-Bag pseudo-random piece generator for fair piece distribution.
- * - Framebuffer composition for hardware-agnostic rendering.
- *
- * Zero embedded dependencies: uses standard C99 only.
+ * - Uses standard C only.
+ * @file tetris_core.c
  */
 
 #include "tetris_core.h"

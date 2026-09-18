@@ -24,7 +24,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <stdbool.h>
+#include "display.h"
+#include "tetris_core.h"
+#include "tetromino.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,18 +55,40 @@
 __IO uint32_t BspButtonState = BUTTON_RELEASED;
 
 /* USER CODE BEGIN PV */
-
+UART_HandleTypeDef huart2;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void MX_USART2_UART_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void MX_USART2_UART_Init(void)
+{
+  __HAL_RCC_USART2_CLK_ENABLE();
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
 
+int _write(int file, char *ptr, int len)
+{
+  (void)file;
+  HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, HAL_MAX_DELAY);
+  return len;
+}
 /* USER CODE END 0 */
 
 /**
@@ -97,36 +123,105 @@ int main(void)
   MX_DMA_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+  MX_USART2_UART_Init();
+  printf("\r\n========================================\r\n");
+  printf("     STM32 Tetris Game Starting!        \r\n");
+  printf("  Controls:                             \r\n");
+  printf("    Left   : PC0 (A5)                   \r\n");
+  printf("    Right  : PC1 (A4)                   \r\n");
+  printf("    Rotate : PC2 / Blue Onboard Button  \r\n");
+  printf("    Drop   : PC3                        \r\n");
+  printf("========================================\r\n");
 
+  display_init();
+
+  tetris_game_t game;
+  tetris_init(&game);
+  display_render_game(&game);
   /* USER CODE END 2 */
-
-  /* Initialize leds */
-  BSP_LED_Init(LED2);
-
-  /* Initialize USER push-button, will be used to trigger an interrupt each time it's pressed.*/
-  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
-
-  /* USER CODE BEGIN BSP */
-
-  /* -- Sample board code to switch on leds ---- */
-  BSP_LED_On(LED2);
-
-  /* USER CODE END BSP */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t last_gravity_time = HAL_GetTick();
+  uint32_t last_frame_time = HAL_GetTick();
+
+  GPIO_PinState prev_left = GPIO_PIN_SET;
+  GPIO_PinState prev_right = GPIO_PIN_SET;
+  GPIO_PinState prev_rotate = GPIO_PIN_SET;
+  GPIO_PinState prev_user_btn = GPIO_PIN_SET;
+  GPIO_PinState prev_drop = GPIO_PIN_SET;
+
   while (1)
   {
+    uint32_t now = HAL_GetTick();
 
-    /* -- Sample board code for User push-button in interrupt mode ---- */
-    if (BspButtonState == BUTTON_PRESSED)
-    {
-      /* Update button state */
-      BspButtonState = BUTTON_RELEASED;
-      /* -- Sample board code to toggle leds ---- */
-      BSP_LED_Toggle(LED2);
-      /* ..... Perform your action ..... */
+    // 1. Read Button Inputs (Active-Low: 0 = Pressed, 1 = Released)
+    GPIO_PinState curr_left   = HAL_GPIO_ReadPin(Btn_Left_GPIO_Port, Btn_Left_Pin);
+    GPIO_PinState curr_right  = HAL_GPIO_ReadPin(Btn_Right_GPIO_Port, Btn_Right_Pin);
+    GPIO_PinState curr_rotate = HAL_GPIO_ReadPin(Btn_Rotate_GPIO_Port, Btn_Rotate_Pin);
+    GPIO_PinState curr_drop   = HAL_GPIO_ReadPin(Btn_Drop_GPIO_Port, Btn_Drop_Pin);
+    GPIO_PinState curr_user   = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+
+    tetris_input_t input = TETRIS_INPUT_NONE;
+
+    if (prev_left == GPIO_PIN_SET && curr_left == GPIO_PIN_RESET) {
+      input |= TETRIS_INPUT_LEFT;
+      printf("[INPUT] Left\r\n");
     }
+    if (prev_right == GPIO_PIN_SET && curr_right == GPIO_PIN_RESET) {
+      input |= TETRIS_INPUT_RIGHT;
+      printf("[INPUT] Right\r\n");
+    }
+    if ((prev_rotate == GPIO_PIN_SET && curr_rotate == GPIO_PIN_RESET) ||
+        (prev_user_btn == GPIO_PIN_SET && curr_user == GPIO_PIN_RESET)) {
+      input |= TETRIS_INPUT_ROTATE;
+      printf("[INPUT] Rotate\r\n");
+    }
+    if (prev_drop == GPIO_PIN_SET && curr_drop == GPIO_PIN_RESET) {
+      input |= TETRIS_INPUT_DROP;
+      printf("[INPUT] Drop\r\n");
+    }
+
+    prev_left     = curr_left;
+    prev_right    = curr_right;
+    prev_rotate   = curr_rotate;
+    prev_user_btn = curr_user;
+    prev_drop     = curr_drop;
+
+    // If game over and any button pressed, restart
+    if (game.state == TETRIS_STATE_GAME_OVER && input != TETRIS_INPUT_NONE) {
+      tetris_init(&game);
+      display_render_game(&game);
+      printf("[GAME] Restarted!\r\n");
+      input = TETRIS_INPUT_NONE;
+    }
+
+    // 2. Gravity Tick Calculation (speeds up with level)
+    uint32_t gravity_interval = 800;
+    if (game.level > 1 && game.level <= 10) {
+      gravity_interval = 800 - (game.level - 1) * 70;
+    } else if (game.level > 10) {
+      gravity_interval = 120;
+    }
+
+    bool gravity_tick = false;
+    if (now - last_gravity_time >= gravity_interval) {
+      gravity_tick = true;
+      last_gravity_time = now;
+    }
+
+    // 3. Step Game Simulation
+    if (input != TETRIS_INPUT_NONE || gravity_tick) {
+      tetris_step(&game, input, gravity_tick);
+    }
+
+    // 4. Render Frame at ~40 FPS (every 25 ms)
+    if (now - last_frame_time >= 25) {
+      last_frame_time = now;
+      display_render_game(&game);
+    }
+
+    HAL_Delay(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

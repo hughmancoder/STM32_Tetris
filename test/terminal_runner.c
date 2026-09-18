@@ -92,25 +92,19 @@ static uint64_t get_time_ms(void) {
 static const char *get_cell_ansi(uint8_t cell) {
   switch (cell) {
   case TETROMINO_I:
-    return "\033[38;2;0;168;185m██\033[0m"; // Warm Teal / Turquoise (0, 168,
-                                            // 185)
+    return "\033[38;2;0;168;185m██\033[0m";   // Warm Teal / Turquoise (0, 168, 185)
   case TETROMINO_J:
     return "\033[38;2;230;120;150m██\033[0m"; // Soft Coral Pink (230, 120, 150)
   case TETROMINO_L:
-    return "\033[38;2;245;130;20m██\033[0m"; // Warm Tangerine Orange (245, 130,
-                                             // 20)
+    return "\033[38;2;245;130;20m██\033[0m";  // Warm Tangerine Orange (245, 130, 20)
   case TETROMINO_O:
-    return "\033[38;2;235;195;20m██\033[0m"; // Warm Goldenrod Yellow (235, 195,
-                                             // 20)
+    return "\033[38;2;235;195;20m██\033[0m";  // Warm Goldenrod Yellow (235, 195, 20)
   case TETROMINO_S:
-    return "\033[38;2;215;55;40m██\033[0m"; // Terra Cotta / Brick Red (215, 55,
-                                            // 40)
+    return "\033[38;2;215;55;40m██\033[0m";   // Terra Cotta / Brick Red (215, 55, 40)
   case TETROMINO_T:
-    return "\033[38;2;145;75;145m██\033[0m"; // Muted Wood Plum / Purple (145,
-                                             // 75, 145)
+    return "\033[38;2;145;75;145m██\033[0m";  // Muted Wood Plum / Purple (145, 75, 145)
   case TETROMINO_Z:
-    return "\033[38;2;20;145;70m██\033[0m"; // Forest / Emerald Green (20, 145,
-                                            // 70)
+    return "\033[38;2;20;145;70m██\033[0m";   // Forest / Emerald Green (20, 145, 70)
   default:
     return "  "; // Empty cell
   }
