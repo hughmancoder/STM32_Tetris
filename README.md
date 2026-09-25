@@ -6,12 +6,6 @@ A modular, bare-metal Tetris implementation written in pure C for the **STM32 Nu
 
 ![STM32 Tetris Hardware Setup](docs/board.png)
 
-## Overview & Features
-
-- **Decoupled Architecture:** Platform-agnostic C game logic (`src/game/`) that runs on both bare-metal microcontrollers and PC terminal simulators (`make sim`). See [Architecture Documentation](docs/architecture.md) for full design & diagrams.
-- **Smooth Graphics:** Zero-flicker differential rendering over high-speed SPI1 (only redrawing grid cells that change state).
-- **Physical Arcade Controls:** Active-low push buttons with software debounce for Left, Right, Rotate, and Hard Drop.
-- **Color-Calibrated Palette:** Warm Montessori/Tangram block colors calibrated for ILI9341 BGR TFT panels.
 
 ## Hardware Components
 
