@@ -1,17 +1,8 @@
 # STM32 Tetris
 
-> **Bare-metal Tetris arcade game built for the STM32 Nucleo-F446RE, featuring a 240x320 SPI TFT display and physical push-button controls.**
-
-A modular, bare-metal Tetris implementation written in pure C for the **STM32 Nucleo-F446RE** (ARM Cortex-M4). The project pairs a decoupled, platform-independent game engine with a sub-millisecond differential renderer for 240×320 ILI9341 displays, debounced GPIO button controls, and a host terminal simulator for rapid desktop testing.
 
 ![STM32 Tetris Hardware Setup](docs/board.png)
 
-## Overview & Features
-
-- **Decoupled Architecture:** Platform-agnostic C game logic (`src/game/`) that runs on both bare-metal microcontrollers and PC terminal simulators (`make sim`). See [Architecture Documentation](docs/architecture.md) for full design & diagrams.
-- **Smooth Graphics:** Zero-flicker differential rendering over high-speed SPI1 (only redrawing grid cells that change state).
-- **Physical Arcade Controls:** Active-low push buttons with software debounce for Left, Right, Rotate, and Hard Drop.
-- **Color-Calibrated Palette:** Warm Montessori/Tangram block colors calibrated for ILI9341 BGR TFT panels.
 
 ## Hardware Components
 
