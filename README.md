@@ -1,8 +1,6 @@
 # STM32 Tetris
 
-A modular, bare-metal Tetris implementation written in  C for the **STM32 Nucleo-F446RE** to learn baremetal embedded programming
-
-
+A modular, bare-metal Tetris implementation written in  C for the **STM32 Nucleo-F446RE**. The gpio pins, clock, and spi pins are configured using the `RM0390 Reference manual`. 
 
 ![STM32 Tetris Hardware Setup](docs/board.png)
 
@@ -29,7 +27,18 @@ Refer to makefile
 
 **Baremetal memory usage**
 
+Bare-metal (direct register) programming, has less RAM and memory usage and faster build times
+
+RAM:   [          ]   0.5% (used 668 bytes from 131072 bytes)
+Flash: [          ]   1.4% (used 7424 bytes from 524288 bytes)
+Took 0.57 seconds 
+
 **HAL memory usage**
+
+RAM:   [          ]   0.7% (used 956 bytes from 131072 bytes)
+Flash: [          ]   3.0% (used 15488 bytes from 524288 bytes)
+Took 2.59 seconds 
+
 
 ## Pinout and Wiring
 

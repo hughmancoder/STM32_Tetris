@@ -144,40 +144,25 @@ int main(void) {
   uint8_t prev_left = 1;
   uint8_t prev_right = 1;
   uint8_t prev_rotate = 1;
-  uint8_t prev_user_btn = 1;
   uint8_t prev_drop = 1;
 
   while (true) {
     uint32_t now = get_millis();
 
-    /* =========================================================================
-     * Read Button Inputs (Active-Low: 0 = Pressed, 1 = Released)
-     * To be implemented by you using GPIOC->IDR register.
-     * Pins:
-     *   - Left:   PC0 (Btn_Left_Pin_Pos)
-     *   - Right:  PC1 (Btn_Right_Pin_Pos)
-     *   - Rotate: PC2 (Btn_Rotate_Pin_Pos)
-     *   - Drop:   PC3 (Btn_Drop_Pin_Pos)
-     *   - User:   PC13
-     * =========================================================================
-     */
-
-    /* --- Original HAL ReadPin (Commented Out) ---
+    /* --- Original HAL ReadPin ---
     GPIO_PinState curr_left = HAL_GPIO_ReadPin(Btn_Left_GPIO_Port,
     Btn_Left_Pin); GPIO_PinState curr_right =
     HAL_GPIO_ReadPin(Btn_Right_GPIO_Port, Btn_Right_Pin); GPIO_PinState
     curr_rotate = HAL_GPIO_ReadPin(Btn_Rotate_GPIO_Port, Btn_Rotate_Pin);
     GPIO_PinState curr_drop = HAL_GPIO_ReadPin(Btn_Drop_GPIO_Port,
-    Btn_Drop_Pin); GPIO_PinState curr_user = HAL_GPIO_ReadPin(GPIOC,
-    GPIO_PIN_13);
+    Btn_Drop_Pin);
     ---------------------------------------------- */
 
-    /* TODO: Read from GPIOC->IDR */
-    uint8_t curr_left = 1;
-    uint8_t curr_right = 1;
-    uint8_t curr_rotate = 1;
-    uint8_t curr_drop = 1;
-    uint8_t curr_user = 1;
+    /* Read from GPIOC input data registers for button states */
+    uint8_t curr_left = (GPIOC->IDR >> Btn_Left_Pin_Pos) & 1U;
+    uint8_t curr_right = (GPIOC->IDR >> Btn_Right_Pin_Pos) & 1U;
+    uint8_t curr_rotate = (GPIOC->IDR >> Btn_Rotate_Pin_Pos) & 1U;
+    uint8_t curr_drop = (GPIOC->IDR >> Btn_Drop_Pin_Pos) & 1U;
 
     tetris_input_t input = TETRIS_INPUT_NONE;
 
@@ -187,8 +172,7 @@ int main(void) {
     if (prev_right == 1 && curr_right == 0) {
       input |= TETRIS_INPUT_RIGHT;
     }
-    if ((prev_rotate == 1 && curr_rotate == 0) ||
-        (prev_user_btn == 1 && curr_user == 0)) {
+    if (prev_rotate == 1 && curr_rotate == 0) {
       input |= TETRIS_INPUT_ROTATE;
     }
     if (prev_drop == 1 && curr_drop == 0) {
@@ -198,7 +182,6 @@ int main(void) {
     prev_left = curr_left;
     prev_right = curr_right;
     prev_rotate = curr_rotate;
-    prev_user_btn = curr_user;
     prev_drop = curr_drop;
 
     // If game over and any button pressed, restart
