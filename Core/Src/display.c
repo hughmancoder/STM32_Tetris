@@ -7,32 +7,49 @@
 #include <stdio.h>
 #include <string.h>
 
-#define CS_LOW() HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET)
-#define CS_HIGH() HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET)
-#define DC_CMD() HAL_GPIO_WritePin(DC_GPIO_Port, DC_Pin, GPIO_PIN_RESET)
-#define DC_DATA() HAL_GPIO_WritePin(DC_GPIO_Port, DC_Pin, GPIO_PIN_SET)
-#define RST_LOW() HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_RESET)
-#define RST_HIGH() HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_SET)
+/* --- Original HAL Pin Control (Commented Out) ---
+// #define CS_LOW() HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET)
+// #define CS_HIGH() HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET)
+// #define DC_CMD() HAL_GPIO_WritePin(DC_GPIO_Port, DC_Pin, GPIO_PIN_RESET)
+// #define DC_DATA() HAL_GPIO_WritePin(DC_GPIO_Port, DC_Pin, GPIO_PIN_SET)
+// #define RST_LOW() HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_RESET)
+// #define RST_HIGH() HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_SET)
+--- End Original HAL Pin Control --- */
+
+/* =========================================================================
+ * Bare-Metal Pin Control (To be implemented using GPIOB->BSRR or GPIOB->ODR)
+ * CS = PB0, DC = PB1, RESET = PB2
+ * In BSRR: lower 16 bits set pins HIGH, upper 16 bits reset pins LOW.
+ * ========================================================================= */
+#define CS_LOW()     do { /* TODO: GPIOB->BSRR = (1U << (CS_Pin_Pos + 16)); */ } while(0)
+#define CS_HIGH()    do { /* TODO: GPIOB->BSRR = (1U << CS_Pin_Pos); */ } while(0)
+#define DC_CMD()     do { /* TODO: GPIOB->BSRR = (1U << (DC_Pin_Pos + 16)); */ } while(0)
+#define DC_DATA()    do { /* TODO: GPIOB->BSRR = (1U << DC_Pin_Pos); */ } while(0)
+#define RST_LOW()    do { /* TODO: GPIOB->BSRR = (1U << (RESET_Pin_Pos + 16)); */ } while(0)
+#define RST_HIGH()   do { /* TODO: GPIOB->BSRR = (1U << RESET_Pin_Pos); */ } while(0)
 
 // Low-level SPI transfer helpers
 static inline void write_cmd(uint8_t cmd) {
   DC_CMD();
   CS_LOW();
-  HAL_SPI_Transmit(&hspi1, &cmd, 1, HAL_MAX_DELAY);
+  /* Transmit via baremetal SPI1 */
+  spi1_transmit_byte(cmd);
   CS_HIGH();
 }
 
 static inline void write_data(uint8_t data) {
   DC_DATA();
   CS_LOW();
-  HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
+  /* Transmit via baremetal SPI1 */
+  spi1_transmit_byte(data);
   CS_HIGH();
 }
 
 static inline void write_data_buf(const uint8_t *buf, uint16_t len) {
   DC_DATA();
   CS_LOW();
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)buf, len, HAL_MAX_DELAY);
+  /* Transmit via baremetal SPI1 */
+  spi1_transmit_buf(buf, len);
   CS_HIGH();
 }
 
@@ -53,15 +70,15 @@ void display_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 void display_init(void) {
   // 1. Hardware Reset
   RST_HIGH();
-  HAL_Delay(5);
+  delay_ms(5);
   RST_LOW();
-  HAL_Delay(20);
+  delay_ms(20);
   RST_HIGH();
-  HAL_Delay(150);
+  delay_ms(150);
 
   // 2. Software Reset
   write_cmd(0x01);
-  HAL_Delay(120);
+  delay_ms(120);
 
   // 3. ILI9341 Initialization Sequence
   write_cmd(0xCB);
@@ -128,10 +145,10 @@ void display_init(void) {
   }
 
   write_cmd(0x11); // Sleep OUT
-  HAL_Delay(120);
+  delay_ms(120);
 
   write_cmd(0x29); // Display ON
-  HAL_Delay(20);
+  delay_ms(20);
 
   display_clear(COLOR_BLACK);
 }
@@ -163,7 +180,8 @@ void display_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
   while (total_pixels > 0) {
     uint16_t count =
         (total_pixels > CHUNK_PIXELS) ? CHUNK_PIXELS : (uint16_t)total_pixels;
-    HAL_SPI_Transmit(&hspi1, chunk, count * 2, HAL_MAX_DELAY);
+    /* Transmit chunk via baremetal SPI */
+    spi1_transmit_buf(chunk, count * 2);
     total_pixels -= count;
   }
   CS_HIGH();

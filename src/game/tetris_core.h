@@ -1,23 +1,6 @@
 /**
  * @file tetris_core.h
- * @brief Decoupled, Pure-C Core Tetris Game Engine.
- *
- * PURPOSE & ARCHITECTURE:
- * -----------------------
- * This header defines the public contract, data models, and state machine
- * for the Tetris game engine.
- *
- * DESIGN PRINCIPLES:
- * 1. Hardware Agnostic: ZERO dependencies on STM32 HAL, SPI, GPIO, or displays.
- *    Only standard C types (<stdint.h>, <stdbool.h>) are used.
- * 2. Fully Testable: Can be compiled and executed on a host PC/Mac under
- * GCC/Clang for instant unit testing without hardware.
- * 3. Standard Playfield: 10 columns x 20 visible rows.
- * 4. Deterministic Tick: State transitions occur strictly through
- * `tetris_step()`, taking an abstract input bitmask and gravity tick indicator.
- * 5. Clean Rendering Boundary: Exposes `tetris_get_framebuffer()` or direct
- * state inspection so the display adapter can draw cells without the game
- * knowing how pixels are pushed.
+ * @brief Tetris Game Engine.
  */
 
 #ifndef TETRIS_CORE_H

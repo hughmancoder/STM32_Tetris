@@ -1,20 +1,7 @@
 /**
  * @file tetromino.h
- * @brief Pure C Tetromino definitions, rotation matrices, and color palettes.
- *
- * PURPOSE & ARCHITECTURE:
- * -----------------------
- * This file defines the core geometry and visual attributes of the 7 standard
- * Tetris pieces (I, J, L, O, S, T, Z) following the standard Tetris guideline.
- *
- * It is completely decoupled from any target hardware, STM32 HAL libraries,
- * display controllers, or operating systems. It only depends on standard C
- * types (<stdint.h>, <stdbool.h>).
- *
- * Each piece is defined across 4 rotation states (0 deg, 90 deg, 180 deg, 270
- * deg) within a normalized 4x4 matrix grid. Colors are defined in standard
- * 16-bit RGB565 format for direct mapping to color SPI TFT displays (e.g.
- * ILI9341, ST7789).
+ * @brief Tetromino definitions, rotation matrices, and colour palettes.
+
  */
 
 #ifndef TETROMINO_H

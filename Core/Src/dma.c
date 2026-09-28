@@ -38,15 +38,21 @@
   */
 void MX_DMA_Init(void)
 {
+  /* =========================================================================
+   * Bare-Metal DMA Configuration (Optional - to be implemented by you)
+   * Refer to Reference Manual RM0390 -> Section: DMA controller (DMA)
+   *
+   * Tasks (for SPI1 TX on DMA2 Stream 3 Channel 3):
+   * 1. Enable DMA2 clock in RCC->AHB1ENR
+   * 2. Configure DMA2_Stream3->CR (Channel 3, Mem-to-Periph, 8-bit, MINC, etc.)
+   * 3. Set peripheral target address: DMA2_Stream3->PAR = (uint32_t)&(SPI1->DR)
+   * ========================================================================= */
 
-  /* DMA controller clock enable */
+  /* --- Original HAL DMA Implementation (Commented out) ---
   __HAL_RCC_DMA2_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA2_Stream3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-
+  --- End of Original HAL DMA Implementation --- */
 }
 
 /* USER CODE BEGIN 2 */

@@ -32,13 +32,18 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern SPI_HandleTypeDef hspi1;
+// Level 1 Bare-metal: Commented out HAL SPI handle
+// extern SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
 void MX_SPI1_Init(void);
+
+/* Bare-metal SPI functions for user to implement */
+uint8_t spi1_transmit_byte(uint8_t data);
+void spi1_transmit_buf(const uint8_t *data, uint16_t size);
 
 /* USER CODE BEGIN Prototypes */
 

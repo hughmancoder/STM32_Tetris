@@ -24,20 +24,40 @@
 
 /* USER CODE END 0 */
 
-SPI_HandleTypeDef hspi1;
-DMA_HandleTypeDef hdma_spi1_tx;
+/* Level 1 Bare-metal: Commented out HAL SPI handles */
+// SPI_HandleTypeDef hspi1;
+// DMA_HandleTypeDef hdma_spi1_tx;
 
 /* SPI1 init function */
 void MX_SPI1_Init(void)
 {
+  /* =========================================================================
+   * Bare-Metal Implementation (To be implemented by you using CMSIS registers)
+   * Refer to Reference Manual RM0390 -> Section: SPI
+   *
+   * Tasks:
+   * 1. Enable SPI1 and GPIOA Peripheral Clocks:
+   *    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+   *    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+   *
+   * 2. Configure PA5 (SCK) and PA7 (MOSI) for Alternate Function 5 (SPI1):
+   *    - Set MODER to Alternate Function (10) for PA5 & PA7
+   *    - Set OSPEEDR to High/Very High
+   *    - Set AFR[0] (AFRL) to AF5 (0101) for pin 5 and pin 7
+   *
+   * 3. Configure SPI1 Registers (SPI1->CR1):
+   *    - Master selection (MSTR)
+   *    - Baud rate prescaler (BR[2:0])
+   *    - Clock polarity & phase (CPOL=0, CPHA=0 for Mode 0)
+   *    - 8-bit data frame format (DFF=0)
+   *    - MSB first (LSBFIRST=0)
+   *    - Software slave management (SSM=1, SSI=1)
+   *
+   * 4. Enable SPI1:
+   *    SPI1->CR1 |= SPI_CR1_SPE;
+   * ========================================================================= */
 
-  /* USER CODE BEGIN SPI1_Init 0 */
-
-  /* USER CODE END SPI1_Init 0 */
-
-  /* USER CODE BEGIN SPI1_Init 1 */
-
-  /* USER CODE END SPI1_Init 1 */
+  /* --- Original HAL Implementation (Commented Out) ---
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
@@ -54,85 +74,44 @@ void MX_SPI1_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN SPI1_Init 2 */
-
-  /* USER CODE END SPI1_Init 2 */
-
+  --- End of Original HAL Implementation --- */
 }
 
+/**
+ * @brief Transmit 1 byte via SPI1 and return received byte
+ * (To be implemented by you using registers: wait for TXE in SPI1->SR, write SPI1->DR, wait for RXNE, read DR)
+ */
+uint8_t spi1_transmit_byte(uint8_t data)
+{
+  /* TODO: Wait for TXE (Transmit buffer empty) flag in SPI1->SR */
+  /* TODO: Write data to SPI1->DR */
+  /* TODO: Wait for RXNE (Receive buffer not empty) flag in SPI1->SR */
+  /* TODO: Return (uint8_t)(SPI1->DR) */
+  (void)data;
+  return 0;
+}
+
+/**
+ * @brief Transmit a buffer of bytes via SPI1
+ */
+void spi1_transmit_buf(const uint8_t *data, uint16_t size)
+{
+  for (uint16_t i = 0; i < size; i++) {
+    spi1_transmit_byte(data[i]);
+  }
+}
+
+/* --- Original HAL MSP Functions (Commented Out) ---
 void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
 {
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(spiHandle->Instance==SPI1)
-  {
-  /* USER CODE BEGIN SPI1_MspInit 0 */
-
-  /* USER CODE END SPI1_MspInit 0 */
-    /* SPI1 clock enable */
-    __HAL_RCC_SPI1_CLK_ENABLE();
-
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**SPI1 GPIO Configuration
-    PA5     ------> SPI1_SCK
-    PA7     ------> SPI1_MOSI
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_7;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    /* SPI1 DMA Init */
-    /* SPI1_TX Init */
-    hdma_spi1_tx.Instance = DMA2_Stream3;
-    hdma_spi1_tx.Init.Channel = DMA_CHANNEL_3;
-    hdma_spi1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
-    hdma_spi1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_spi1_tx.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_spi1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    hdma_spi1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    hdma_spi1_tx.Init.Mode = DMA_NORMAL;
-    hdma_spi1_tx.Init.Priority = DMA_PRIORITY_HIGH;
-    hdma_spi1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    if (HAL_DMA_Init(&hdma_spi1_tx) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    __HAL_LINKDMA(spiHandle,hdmatx,hdma_spi1_tx);
-
-  /* USER CODE BEGIN SPI1_MspInit 1 */
-
-  /* USER CODE END SPI1_MspInit 1 */
-  }
+  ...
 }
 
 void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 {
-
-  if(spiHandle->Instance==SPI1)
-  {
-  /* USER CODE BEGIN SPI1_MspDeInit 0 */
-
-  /* USER CODE END SPI1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_SPI1_CLK_DISABLE();
-
-    /**SPI1 GPIO Configuration
-    PA5     ------> SPI1_SCK
-    PA7     ------> SPI1_MOSI
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_5|GPIO_PIN_7);
-
-    /* SPI1 DMA DeInit */
-    HAL_DMA_DeInit(spiHandle->hdmatx);
-  /* USER CODE BEGIN SPI1_MspDeInit 1 */
-
-  /* USER CODE END SPI1_MspDeInit 1 */
-  }
+  ...
 }
+--- End of HAL MSP Functions --- */
 
 /* USER CODE BEGIN 1 */
 

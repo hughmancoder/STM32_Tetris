@@ -45,41 +45,52 @@
 /* Private macro -------------------------------------------------------------*/
 
 /* Button state */
+/* Level 1 Bare-metal: Button state definitions */
 #define BUTTON_RELEASED 0U
 #define BUTTON_PRESSED 1U
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-__IO uint32_t BspButtonState = BUTTON_RELEASED;
 
 /* USER CODE BEGIN PV */
-UART_HandleTypeDef huart2;
+// UART_HandleTypeDef huart2;
 /* USER CODE END PV */
+
+/* SysTick millisecond counter */
+volatile uint32_t ms_ticks = 0;
+
+// documented in STM arm M4 MCU programming manual
+void systick_init(uint32_t sys_clk_hz) {
+  // 1 mm tick
+  SysTick->LOAD = (sys_clk_hz / 1000U) - 1U;
+  SysTick->VAL = 0U;
+
+  // Control aand Status register
+  // Tells the timer to use the main processor clock rather than an external,
+  // slower clock, enables the hardware exception request and turns the timer on
+  // and starts the actual countdown.
+  SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk |
+                  SysTick_CTRL_ENABLE_Msk;
+}
+
+uint32_t get_millis(void) { return ms_ticks; }
+
+void delay_ms(uint32_t ms) {
+  uint32_t start = ms_ticks;
+  while ((ms_ticks - start) < ms)
+    ;
+}
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void MX_USART2_UART_Init(void);
+// void MX_USART2_UART_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* --- Original HAL UART (Commented Out) ---
 void MX_USART2_UART_Init(void) {
   __HAL_RCC_USART2_CLK_ENABLE();
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK) {
-    Error_Handler();
-  }
+  ...
 }
 
 int _write(int file, char *ptr, int len) {
@@ -87,6 +98,7 @@ int _write(int file, char *ptr, int len) {
   HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, HAL_MAX_DELAY);
   return len;
 }
+--- End Original HAL UART --- */
 /* USER CODE END 0 */
 
 /**
@@ -101,27 +113,21 @@ int main(void) {
 
   /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick.
-   */
-  HAL_Init();
+  /* Level 1 Bare-metal: Commented out HAL_Init() */
+  // HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
+  /* Initialize SysTick timer for 1ms interrupts (default 16MHz HSI clock) */
+  systick_init(16000000U);
 
   /* Configure the system clock */
   SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  MX_USART2_UART_Init();
+  // MX_USART2_UART_Init();
 
   display_init();
 
@@ -132,47 +138,61 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint32_t last_gravity_time = HAL_GetTick();
-  uint32_t last_frame_time = HAL_GetTick();
+  uint32_t last_gravity_time = get_millis();
+  uint32_t last_frame_time = get_millis();
 
-  GPIO_PinState prev_left = GPIO_PIN_SET;
-  GPIO_PinState prev_right = GPIO_PIN_SET;
-  GPIO_PinState prev_rotate = GPIO_PIN_SET;
-  GPIO_PinState prev_user_btn = GPIO_PIN_SET;
-  GPIO_PinState prev_drop = GPIO_PIN_SET;
+  uint8_t prev_left = 1;
+  uint8_t prev_right = 1;
+  uint8_t prev_rotate = 1;
+  uint8_t prev_user_btn = 1;
+  uint8_t prev_drop = 1;
 
   while (true) {
-    uint32_t now = HAL_GetTick();
+    uint32_t now = get_millis();
 
-    // 1. Read Button Inputs (Active-Low: 0 = Pressed, 1 = Released)
-    GPIO_PinState curr_left =
-        HAL_GPIO_ReadPin(Btn_Left_GPIO_Port, Btn_Left_Pin);
-    GPIO_PinState curr_right =
-        HAL_GPIO_ReadPin(Btn_Right_GPIO_Port, Btn_Right_Pin);
-    GPIO_PinState curr_rotate =
-        HAL_GPIO_ReadPin(Btn_Rotate_GPIO_Port, Btn_Rotate_Pin);
-    GPIO_PinState curr_drop =
-        HAL_GPIO_ReadPin(Btn_Drop_GPIO_Port, Btn_Drop_Pin);
-    GPIO_PinState curr_user = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+    /* =========================================================================
+     * Read Button Inputs (Active-Low: 0 = Pressed, 1 = Released)
+     * To be implemented by you using GPIOC->IDR register.
+     * Pins:
+     *   - Left:   PC0 (Btn_Left_Pin_Pos)
+     *   - Right:  PC1 (Btn_Right_Pin_Pos)
+     *   - Rotate: PC2 (Btn_Rotate_Pin_Pos)
+     *   - Drop:   PC3 (Btn_Drop_Pin_Pos)
+     *   - User:   PC13
+     * =========================================================================
+     */
+
+    /* --- Original HAL ReadPin (Commented Out) ---
+    GPIO_PinState curr_left = HAL_GPIO_ReadPin(Btn_Left_GPIO_Port,
+    Btn_Left_Pin); GPIO_PinState curr_right =
+    HAL_GPIO_ReadPin(Btn_Right_GPIO_Port, Btn_Right_Pin); GPIO_PinState
+    curr_rotate = HAL_GPIO_ReadPin(Btn_Rotate_GPIO_Port, Btn_Rotate_Pin);
+    GPIO_PinState curr_drop = HAL_GPIO_ReadPin(Btn_Drop_GPIO_Port,
+    Btn_Drop_Pin); GPIO_PinState curr_user = HAL_GPIO_ReadPin(GPIOC,
+    GPIO_PIN_13);
+    ---------------------------------------------- */
+
+    /* TODO: Read from GPIOC->IDR */
+    uint8_t curr_left = 1;
+    uint8_t curr_right = 1;
+    uint8_t curr_rotate = 1;
+    uint8_t curr_drop = 1;
+    uint8_t curr_user = 1;
 
     tetris_input_t input = TETRIS_INPUT_NONE;
 
-    if (prev_left == GPIO_PIN_SET && curr_left == GPIO_PIN_RESET) {
+    if (prev_left == 1 && curr_left == 0) {
       input |= TETRIS_INPUT_LEFT;
-      printf("[INPUT] Left\r\n");
     }
-    if (prev_right == GPIO_PIN_SET && curr_right == GPIO_PIN_RESET) {
+    if (prev_right == 1 && curr_right == 0) {
       input |= TETRIS_INPUT_RIGHT;
-      printf("[INPUT] Right\r\n");
     }
-    if ((prev_rotate == GPIO_PIN_SET && curr_rotate == GPIO_PIN_RESET) ||
-        (prev_user_btn == GPIO_PIN_SET && curr_user == GPIO_PIN_RESET)) {
+    if ((prev_rotate == 1 && curr_rotate == 0) ||
+        (prev_user_btn == 1 && curr_user == 0)) {
       input |= TETRIS_INPUT_ROTATE;
-      printf("[INPUT] Rotate\r\n");
     }
-    if (prev_drop == GPIO_PIN_SET && curr_drop == GPIO_PIN_RESET) {
+    if (prev_drop == 1 && curr_drop == 0) {
       input |= TETRIS_INPUT_DROP;
-      printf("[INPUT] Drop\r\n");
     }
 
     prev_left = curr_left;
@@ -185,7 +205,6 @@ int main(void) {
     if (game.state == TETRIS_STATE_GAME_OVER && input != TETRIS_INPUT_NONE) {
       tetris_init(&game);
       display_render_game(&game);
-      printf("[GAME] Restarted!\r\n");
       input = TETRIS_INPUT_NONE;
     }
 
@@ -214,7 +233,7 @@ int main(void) {
       display_render_game(&game);
     }
 
-    HAL_Delay(10);
+    delay_ms(10);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -227,17 +246,26 @@ int main(void) {
  * @retval None
  */
 void SystemClock_Config(void) {
+  /* =========================================================================
+   * Bare-Metal Clock Configuration (To be implemented by you if desired)
+   * Refer to Reference Manual RM0390 -> Section: Reset and Clock Control (RCC)
+   * By default on reset, the STM32F446 runs on the internal 16MHz HSI clock.
+   * If configuring PLL (e.g. up to 180MHz):
+   * 1. Enable PWR clock, configure voltage scaling (PWR->CR)
+   * 2. Configure Flash latency wait states (FLASH->ACR)
+   * 3. Configure PLL multipliers/dividers (RCC->PLLCFGR)
+   * 4. Enable PLL and wait for PLLRDY (RCC->CR)
+   * 5. Switch SYSCLK to PLL (RCC->CFGR)
+   * =========================================================================
+   */
+
+  /* --- Original HAL Clock Configuration (Commented Out) ---
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
-   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-   * in the RCC_OscInitTypeDef structure.
-   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
@@ -252,8 +280,6 @@ void SystemClock_Config(void) {
     Error_Handler();
   }
 
-  /** Initializes the CPU, AHB and APB buses clocks
-   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
                                 RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
@@ -264,22 +290,20 @@ void SystemClock_Config(void) {
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
     Error_Handler();
   }
+  --- End Original HAL Clock Configuration --- */
 }
 
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 
-/**
- * @brief EXTI line detection callbacks
- * @param GPIO_Pin: Specifies the pins connected EXTI line
- * @retval None
- */
+/* --- Original HAL EXTI Callback (Commented Out) ---
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   if (GPIO_Pin == USER_BUTTON_PIN) {
     BspButtonState = BUTTON_PRESSED;
   }
 }
+--- End HAL EXTI Callback --- */
 
 /**
  * @brief  This function is executed in case of error occurrence.
