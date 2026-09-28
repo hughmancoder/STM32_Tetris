@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    spi.c
-  * @brief   This file provides code for the configuration
-  *          of the SPI instances.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    spi.c
+ * @brief   This file provides code for the configuration
+ *          of the SPI instances.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "spi.h"
@@ -24,38 +24,44 @@
 
 /* USER CODE END 0 */
 
-/* Level 1 Bare-metal: Commented out HAL SPI handles */
+/* HAL SPI handles */
 // SPI_HandleTypeDef hspi1;
 // DMA_HandleTypeDef hdma_spi1_tx;
 
 /* SPI1 init function */
-void MX_SPI1_Init(void)
-{
-  /* =========================================================================
-   * Bare-Metal Implementation (To be implemented by you using CMSIS registers)
-   * Refer to Reference Manual RM0390 -> Section: SPI
-   *
-   * Tasks:
-   * 1. Enable SPI1 and GPIOA Peripheral Clocks:
-   *    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-   *    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-   *
-   * 2. Configure PA5 (SCK) and PA7 (MOSI) for Alternate Function 5 (SPI1):
-   *    - Set MODER to Alternate Function (10) for PA5 & PA7
-   *    - Set OSPEEDR to High/Very High
-   *    - Set AFR[0] (AFRL) to AF5 (0101) for pin 5 and pin 7
-   *
-   * 3. Configure SPI1 Registers (SPI1->CR1):
-   *    - Master selection (MSTR)
-   *    - Baud rate prescaler (BR[2:0])
-   *    - Clock polarity & phase (CPOL=0, CPHA=0 for Mode 0)
-   *    - 8-bit data frame format (DFF=0)
-   *    - MSB first (LSBFIRST=0)
-   *    - Software slave management (SSM=1, SSI=1)
-   *
-   * 4. Enable SPI1:
-   *    SPI1->CR1 |= SPI_CR1_SPE;
-   * ========================================================================= */
+void MX_SPI1_Init(void) {
+
+  // Enable SPI1
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+  RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+
+  // Configure GPIO pins.
+  GPIOA->MODER &= ~(GPIO_MODER_MODER5 | GPIO_MODER_MODER7);
+  // Set to Alternate function mode (10) for SPI
+  GPIOA->MODER |= (GPIO_MODER_MODER5_1 | GPIO_MODER_MODER7_1);
+
+  // Set output speed to very high(11)
+  GPIOA->OSPEEDR |= (GPIO_OSPEEDER_OSPEEDR5 | GPIO_OSPEEDER_OSPEEDR7);
+
+  // No Pull-up, Pull-down (00b) (p. 186)
+  GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPDR5 | GPIO_PUPDR_PUPDR7);
+
+  // Connect pins to AF5, Alternate Function Low register for SPI according to
+  // p.178 fig 19.
+  GPIOA->AFR[0] &= ~(GPIO_AFRL_AFSEL5_Msk | GPIO_AFRL_AFSEL7_Msk);
+  GPIOA->AFR[0] |= (5U << GPIO_AFRL_AFSEL5_Pos) | (5U << GPIO_AFRL_AFSEL7_Pos);
+
+  // Ensure SPI is disabled first before writing configuration
+  SPI1->CR1 &= ~SPI_CR1_SPE;
+
+  // Set Master mode 26.7.1 SPI control register 1 (CPI_CR1), ensable software
+  // slave management (SSM), Internal slave select (ISS) Set baud rate prescaler
+  // (0011) or f PCLK /16
+  SPI1->CR1 =
+      SPI_CR1_MSTR | (SPI_CR1_BR_1 | SPI_CR1_BR_0) | SPI_CR1_SSM | SPI_CR1_SSI;
+
+  // Enable SPI1 (p. 866)
+  SPI1->CR1 |= SPI_CR1_SPE;
 
   /* --- Original HAL Implementation (Commented Out) ---
   hspi1.Instance = SPI1;
@@ -79,25 +85,44 @@ void MX_SPI1_Init(void)
 
 /**
  * @brief Transmit 1 byte via SPI1 and return received byte
- * (To be implemented by you using registers: wait for TXE in SPI1->SR, write SPI1->DR, wait for RXNE, read DR)
+ * (To be implemented by you using registers: wait for TXE in SPI1->SR, write
+ * SPI1->DR, wait for RXNE, read DR)
  */
-uint8_t spi1_transmit_byte(uint8_t data)
-{
-  /* TODO: Wait for TXE (Transmit buffer empty) flag in SPI1->SR */
-  /* TODO: Write data to SPI1->DR */
-  /* TODO: Wait for RXNE (Receive buffer not empty) flag in SPI1->SR */
-  /* TODO: Return (uint8_t)(SPI1->DR) */
-  (void)data;
-  return 0;
+uint8_t spi1_transmit_byte(uint8_t data) {
+
+  // 26.7.3 SPI status register (SPI_SR)
+  // wait util the transmit buffer is empty
+  while (!(SPI1->SR & SPI_SR_TXE)) {
+    __NOP();
+  }
+
+  SPI1->DR = data;
+
+  // wait until receive buffer is empty
+  while (!(SPI1->SR & SPI_SR_RXNE)) {
+    __NOP();
+  }
+
+  // Read received byte from DR, clears RXNE flag
+  return (uint8_t)(SPI1->DR);
 }
 
 /**
  * @brief Transmit a buffer of bytes via SPI1
  */
-void spi1_transmit_buf(const uint8_t *data, uint16_t size)
-{
+void spi1_transmit_buf(const uint8_t *data, uint16_t size) {
   for (uint16_t i = 0; i < size; i++) {
     spi1_transmit_byte(data[i]);
+  }
+}
+
+/**
+ * @brief  Wait until the SPI bus is idle (BSY = 0)
+ *  Call this before pulling CS HIGH!
+ */
+void spi1_wait_idle(void) {
+  while (SPI1->SR & SPI_SR_BSY) {
+    __NOP();
   }
 }
 
@@ -116,4 +141,3 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-

@@ -24,7 +24,8 @@ Release/
 .cproject
 .project
 .settings/
+
+# reference guides
 docs/stm32 nucleo reference manual dm00135183.pdf
-
-
+docs/arm M4 cortex programming manual.pdf
 TODO.md

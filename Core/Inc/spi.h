@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    spi.h
-  * @brief   This file contains all the function prototypes for
-  *          the spi.c file
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    spi.h
+ * @brief   This file contains all the function prototypes for
+ *          the spi.c file
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __SPI_H__
@@ -41,9 +41,10 @@ extern "C" {
 
 void MX_SPI1_Init(void);
 
-/* Bare-metal SPI functions for user to implement */
+/* Bare-metal SPI functions */
 uint8_t spi1_transmit_byte(uint8_t data);
 void spi1_transmit_buf(const uint8_t *data, uint16_t size);
+void spi1_wait_idle(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -54,4 +55,3 @@ void spi1_transmit_buf(const uint8_t *data, uint16_t size);
 #endif
 
 #endif /* __SPI_H__ */
-
