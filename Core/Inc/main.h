@@ -38,7 +38,6 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -72,7 +71,7 @@ void delay_ms(uint32_t ms);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-/* Bare-metal pin numbers (bit positions 0..15) */
+/* Bare-metal pin numbers  */
 #define Btn_Left_Pin_Pos 0U
 #define Btn_Right_Pin_Pos 1U
 #define Btn_Rotate_Pin_Pos 2U

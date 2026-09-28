@@ -27,6 +27,10 @@ Refer to makefile
 - **Clean Project:** `pio run -t clean`
 
 
+**Baremetal memory usage**
+
+**HAL memory usage**
+
 ## Pinout and Wiring
 
 ![Nucleo F446RE Header Pinout](docs/nucleo-f411re-f446re-wifi-serial1.png)

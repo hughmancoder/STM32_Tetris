@@ -12,21 +12,38 @@
 // #define CS_HIGH() HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET)
 // #define DC_CMD() HAL_GPIO_WritePin(DC_GPIO_Port, DC_Pin, GPIO_PIN_RESET)
 // #define DC_DATA() HAL_GPIO_WritePin(DC_GPIO_Port, DC_Pin, GPIO_PIN_SET)
-// #define RST_LOW() HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_RESET)
-// #define RST_HIGH() HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_SET)
+// #define RST_LOW() HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin,
+GPIO_PIN_RESET)
+// #define RST_HIGH() HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin,
+GPIO_PIN_SET)
 --- End Original HAL Pin Control --- */
 
-/* =========================================================================
- * Bare-Metal Pin Control (To be implemented using GPIOB->BSRR or GPIOB->ODR)
- * CS = PB0, DC = PB1, RESET = PB2
- * In BSRR: lower 16 bits set pins HIGH, upper 16 bits reset pins LOW.
- * ========================================================================= */
-#define CS_LOW()     do { /* TODO: GPIOB->BSRR = (1U << (CS_Pin_Pos + 16)); */ } while(0)
-#define CS_HIGH()    do { /* TODO: GPIOB->BSRR = (1U << CS_Pin_Pos); */ } while(0)
-#define DC_CMD()     do { /* TODO: GPIOB->BSRR = (1U << (DC_Pin_Pos + 16)); */ } while(0)
-#define DC_DATA()    do { /* TODO: GPIOB->BSRR = (1U << DC_Pin_Pos); */ } while(0)
-#define RST_LOW()    do { /* TODO: GPIOB->BSRR = (1U << (RESET_Pin_Pos + 16)); */ } while(0)
-#define RST_HIGH()   do { /* TODO: GPIOB->BSRR = (1U << RESET_Pin_Pos); */ } while(0)
+// Configure Bit Set/Reset Register (Section 7.4.7)
+// Bits 31:16 form reset bit (low), bits 15:0 set bit (high)
+#define CS_LOW()                                                               \
+  do {                                                                         \
+    GPIOB->BSRR = (1U << (CS_Pin_Pos + 16));                                   \
+  } while (0)
+#define CS_HIGH()                                                              \
+  do {                                                                         \
+    GPIOB->BSRR = (1U << CS_Pin_Pos);                                          \
+  } while (0)
+#define DC_CMD()                                                               \
+  do {                                                                         \
+    GPIOB->BSRR = (1U << (DC_Pin_Pos + 16));                                   \
+  } while (0)
+#define DC_DATA()                                                              \
+  do {                                                                         \
+    GPIOB->BSRR = (1U << DC_Pin_Pos);                                          \
+  } while (0)
+#define RST_LOW()                                                              \
+  do {                                                                         \
+    GPIOB->BSRR = (1U << (RESET_Pin_Pos + 16));                                \
+  } while (0)
+#define RST_HIGH()                                                             \
+  do {                                                                         \
+    GPIOB->BSRR = (1U << RESET_Pin_Pos);                                       \
+  } while (0)
 
 // Low-level SPI transfer helpers
 static inline void write_cmd(uint8_t cmd) {
@@ -340,7 +357,7 @@ void display_render_game(const tetris_game_t *game) {
     s_first_frame = false;
   }
 
-  // 1. Differential Grid Update
+  // Differential Grid Update
   uint8_t curr_grid[TETRIS_BOARD_ROWS][TETRIS_BOARD_COLS];
   tetris_get_framebuffer(game, curr_grid);
 
@@ -357,7 +374,7 @@ void display_render_game(const tetris_game_t *game) {
     }
   }
 
-  // 2. Score Update
+  // Score Update
   if (game->score != s_prev_score) {
     char buf[12];
     snprintf(buf, sizeof(buf), "%06lu", (unsigned long)game->score);
@@ -365,7 +382,7 @@ void display_render_game(const tetris_game_t *game) {
     s_prev_score = game->score;
   }
 
-  // 3. Level Update
+  // Level Update
   if (game->level != s_prev_level) {
     char buf[16];
     snprintf(buf, sizeof(buf), "%02u", game->level);
@@ -373,7 +390,7 @@ void display_render_game(const tetris_game_t *game) {
     s_prev_level = game->level;
   }
 
-  // 4. Lines Update
+  // Lines Update
   if (game->lines_cleared != s_prev_lines) {
     char buf[16];
     snprintf(buf, sizeof(buf), "%03u", game->lines_cleared);
@@ -381,7 +398,7 @@ void display_render_game(const tetris_game_t *game) {
     s_prev_lines = game->lines_cleared;
   }
 
-  // 5. Next Piece Preview Update
+  // Next Piece Preview Update
   if (game->next_piece != s_prev_next) {
     uint16_t px = HUD_X + 10;
     uint16_t py = 195;
@@ -399,7 +416,7 @@ void display_render_game(const tetris_game_t *game) {
     s_prev_next = game->next_piece;
   }
 
-  // 6. Game Over Banner
+  // Display Game Over
   if (game->state == TETRIS_STATE_GAME_OVER) {
     display_fill_rect(10, 140, 140, 35, COLOR_RED);
     display_draw_string(25, 150, "GAME OVER", COLOR_WHITE, COLOR_RED, 2);
