@@ -31,9 +31,7 @@ extern "C" {
 // #include "stm32f4xx_hal.h"
 // #include "stm32f4xx_nucleo.h"
 
-/* CMSIS Device & Core Headers for STM32F446RE (provides register structs like
- * GPIOA, SPI1, RCC) */
-#include "core_cm4.h"
+/* CMSIS Device Header for STM32F446RE (internally includes core_cm4.h) */
 #include "stm32f446xx.h"
 #include <stdbool.h>
 #include <stdint.h>
