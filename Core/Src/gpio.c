@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    gpio.c
-  * @brief   This file provides code for the configuration
-  *          of all used GPIO pins.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    gpio.c
+ * @brief   This file provides code for the configuration
+ *          of all used GPIO pins.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -41,29 +41,37 @@
      PA2   ------> USART2_TX
      PA3   ------> USART2_RX
 */
-void MX_GPIO_Init(void)
-{
-  /* =========================================================================
-   * Bare-Metal Implementation (To be implemented by you using CMSIS registers)
-   * Refer to Reference Manual RM0390 -> Section: GPIO
-   *
-   * Tasks:
-   * 1. Enable GPIO Clocks:
-   *    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN;
-   *
-   * 2. Configure Output Pins for Display (GPIOB):
-   *    - CS (PB0), DC (PB1), RESET (PB2)
-   *    - Configure as General Purpose Output in GPIOB->MODER
-   *    - Set speed to High/Very High in GPIOB->OSPEEDR
-   *    - Set initial output levels using GPIOB->BSRR
-   *
-   * 3. Configure Input Pins for Buttons (GPIOC):
-   *    - Btn_Left (PC0), Btn_Right (PC1), Btn_Rotate (PC2), Btn_Drop (PC3)
-   *    - Configure as Input mode in GPIOC->MODER
-   *    - Enable internal Pull-Up resistors in GPIOC->PUPDR
-   * ========================================================================= */
+void MX_GPIO_Init(void) {
 
-  /* --- Original HAL Implementation (Commented Out) ---
+  // Enable gpio clocks for relevant gpio ports (6.3.10)
+  RCC->AHB1ENR |=
+      RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN;
+
+  // configure GPIOB output pins 0 (CS), 1 (DC), 2 (RST)for display
+  GPIOB->MODER &= ~(GPIO_MODER_MODER0 | GPIO_MODER_MODER1 | GPIO_MODER_MODER2);
+  GPIOB->MODER |=
+      (GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0 | GPIO_MODER_MODER2_0);
+  // push pull (0). (RM p.185)
+  GPIOB->OTYPER &= ~(GPIO_OTYPER_OT_0 | GPIO_OTYPER_OT_1 | GPIO_OTYPER_OT_2);
+
+  // Set output speed to high (10) or very high(11)
+  GPIOB->OSPEEDR |= (GPIO_OSPEEDER_OSPEEDR0 | GPIO_OSPEEDER_OSPEEDR1 |
+                     GPIO_OSPEEDER_OSPEEDR2);
+
+  // No Pull-up, Pull-down (00b) (p. 186)
+  GPIOB->PUPDR &= ~(GPIO_PUPDR_PUPDR0 | GPIO_PUPDR_PUPDR1 | GPIO_PUPDR_PUPDR2);
+
+  // Set initial output levels for bit set registers
+  GPIOB->BSRR = GPIO_BSRR_BR_0 | GPIO_BSRR_BR_1 | GPIO_BSRR_BR_2;
+
+  // configure gpio c pins to input mode (00) by clearing relevant pins
+  GPIOC->MODER &= ~(GPIO_MODER_MODER0 | GPIO_MODER_MODER1 | GPIO_MODER_MODER2 |
+                    GPIO_MODER_MODER3);
+  // Pull-Up/Pull-Down: Set to Pull-Up (01b) for active-low buttons (p. 186)
+  GPIOC->PUPDR |= (GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0 |
+                   GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0);
+
+  /* --- Original HAL Implementation ---
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   __HAL_RCC_GPIOC_CLK_ENABLE();
